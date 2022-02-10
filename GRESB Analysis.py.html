@@ -1,0 +1,164 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Green Real Estate Sustainablity Benchmark (GRESB) Particpant Data Analysis #
+# 
+# I will be analysis GRESB participants with 5-star ratings in hopes of pulling common investment strategies that provide this rating. Data on GRESB particpants is sourced from GRESB website. 
+
+# In[16]:
+
+
+import pandas as pd
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+from tabulate import tabulate
+
+
+# In[2]:
+
+
+rd = pd.read_csv('GRESBparticipants.csv')
+
+
+# ## Isolating particpants with 5 star ratings ##
+# First I'm going to clean the data from the GRESB website to take out values we won't need for this analysis such as the Development Benchmark and ISIN.
+
+# In[3]:
+
+
+rd = rd.drop(['Development Benchmark', 'ISIN'], axis = 1)
+
+
+# Next we will are looking at portfolios in comparison to Goldman Sachs' so to make sure that conclusions are as accurate and as relevant as possible, I will remove particpants that are not portfolios, classified as Diversified property sectors, nature of ownership and in the Americas. We will also take out any participants that don't have 5-star ratings, because we are trying to build a dataset to figure out how they have the 5-star ratings 
+
+# In[4]:
+
+
+rg_index = rd[(rd['Region'] != 'Americas')].index
+rd.drop(rg_index, inplace = True)
+
+
+# In[5]:
+
+
+pf_index = rd[(rd['Portfolio'] != 'Portfolio')].index
+rd.drop(pf_index, inplace = True)
+
+
+# In[6]:
+
+
+on_index = rd[(rd['Nature of Ownership'] != 'Private')].index
+rd.drop(on_index, inplace = True)
+
+
+# to remove particpants without 5-star ratings we have to do something different because, intead of 'No' to denote that a partipant doesn't have ratings, we have NaaN values. Usually I would use rd = rd.dropna(subset=['5-star ratings']) to remove the NaaN values for just the '5-star rating' column. But, I actually want to take out all the NaaN values from the dataframe - so I will use rd = rd.dropna()
+# 
+# 
+
+# In[7]:
+
+
+rd = rd.dropna()
+
+
+# Property Sector done seperately because I need to figure out how I want to include diversified property sectors. Some portfolios are classified as just 'Diversified', while others 'Diversified - sector classfication'
+
+# In[8]:
+
+
+#creating keyword list 
+keyword = ['Diversified'] 
+rd = rd[rd['Property Sector'].str.contains('|'.join(keyword))]
+
+
+# Succeffully isolated the participants that satisfy the following conditions:
+# - Must be a portfolio
+# - Region must be Americas
+# - Must be privately owned 
+# - Must be Diversified property sector
+# - Must have a 5-star rating
+
+# Below are the twenty-two (22) GRESB particpants with 5 star ratings
+
+# In[20]:
+
+
+gresb_parts = rd['Manager']
+gresb_parts = gresb_parts.drop_duplicates()
+gresb_parts = gresb_parts.to_frame()
+print(gresb_parts.to_markdown()) 
+
+
+# ## GRESB Rating Rubric Analysis and Breakdown ##
+# 
+# I will be using this table to determine the highest weighted aspects as well as their subcategories to create a basis of analysis.
+# 
+# sample benchmark report: https://gresb-prd-public.s3.amazonaws.com/2021/RE_Documents/2021_Kilroy_Realty_BenchmarkReport.pdf
+
+# In[10]:
+
+
+#read in benchmark csv
+rd_rb = pd.read_csv('GRESB Der Rubric.csv')
+headers = rd_rb.head(0)
+
+
+# In[11]:
+
+
+rd_rb = rd_rb.drop(['Unnamed: 5'], axis = 1)
+
+
+# ### Determining the Highest Weighted GRESB Benchmark Aspects ###
+# First we will sort the dataframe by the highest weighted aspects of the benchmark
+
+# In[12]:
+
+
+#contains percentage sign which would affect sorting
+rd_rb['Weight in Component'] = rd_rb['Weight in Component'].str.rstrip('%').astype('float') / 100.0
+
+
+# In[13]:
+
+
+rd_rb = rd_rb.sort_values(by ='Weight in Component', ascending = False)
+
+
+# In[14]:
+
+
+rd_rb = rd_rb.loc[:,['Aspects','Aspect Breakdown','Weight in Component']]
+rd_rb.set_index('Aspects', inplace=True)
+
+
+# Below is a pie chart depicting the weights of each Aspect in the GRESB rating
+
+# In[15]:
+
+
+plot = rd_rb.plot.pie(y = 'Weight in Component', title= 'Aspects Importance', autopct='%1.1f%%', shadow = True,                      startangle = 50, figsize =(10, 10))
+
+
+# Based on the weight assigned to each component, the top aspects scored in the bench mark are:
+# - Stakeholder Engagement (16.8%)
+# - Leadership (11.8%)
+# - Energy (10.1%)
+# - Risk Mananegement (8.4%)
+# - Tenants & Community (7.9%)
+# - Building Certfications (7.6%)
+# - Policies (7.6%)
+# 
+# These aspects represent aproximately the 70% (70.2%) of the score 
+
+# ### GRESB Benchmark Aspect Analysis ###
+# 
+# We will be taking a deeper look at the 
+
+# In[ ]:
+
+
+
+
